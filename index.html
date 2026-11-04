@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#040608" />
+  <meta name="description" content="《勿聲》HUSH — 用麥克風音量照路，也讓自己被聽見。第一人稱聲音恐怖體驗。" />
+  <title>《勿聲》HUSH</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 遊戲畫面 -->
+    <canvas id="game-canvas" width="640" height="360" aria-label="遊戲畫面"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden" aria-live="polite">
+      <div id="danger-vignette"></div>
+      <div id="hud-grain"></div>
+
+      <div class="hud-top">
+        <div id="chapter-name" class="chapter-name">第一章 · 醒</div>
+        <div id="objective-text" class="objective-text">找到出口</div>
+        <div id="hint" class="hint"></div>
+      </div>
+
+      <div class="hud-left">
+        <div id="volume-ring" class="volume-ring" role="meter" aria-label="聲量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="volume-ring__inner">
+            <span id="volume-value" class="volume-ring__value">0</span>
+            <span id="volume-label" class="volume-ring__label">靜默</span>
+          </div>
+        </div>
+        <div class="breath" aria-label="氣息">
+          <div class="breath__head"><span>氣息</span><span id="breath-value">100</span></div>
+          <div class="breath__bar"><div id="breath-fill" class="breath__fill"></div></div>
+        </div>
+        <div id="mode-badge" class="mode-badge">MIC</div>
+      </div>
+
+      <div id="crosshair" class="crosshair" aria-hidden="true"></div>
+      <div id="subtitle" class="subtitle" role="status"></div>
+      <div id="toast" class="toast" role="status"></div>
+
+      <div class="hud-bottom-hint">
+        <span>WASD 移動</span><span>滑鼠／←→ 轉向</span><span class="only-keyboard">空白鍵 發聲</span><span>ESC 暫停</span>
+      </div>
+    </div>
+
+    <!-- 開始畫面 -->
+    <section id="screen-start" class="screen active" aria-label="開始畫面">
+      <div class="screen__veil"></div>
+      <div class="start-wrap">
+        <p class="kicker">聲音恐怖體驗 · 第一人稱</p>
+        <h1 class="game-title" data-text="勿聲">勿聲<span class="game-title__en">HUSH</span></h1>
+        <p class="tagline">看得見的代價，是被聽見。</p>
+        <p class="start-copy">
+          你必須出聲，才能用回聲「看見」漆黑的空間。<br />
+          但每一次出聲，都會引來只聽得見你的東西。
+        </p>
+
+        <div class="start-actions">
+          <button id="btn-start" class="btn btn--primary" type="button">開始遊戲</button>
+          <button id="btn-continue" class="btn hidden" type="button">繼續遊戲</button>
+          <button id="btn-settings" class="btn" type="button">設定</button>
+        </div>
+
+        <div class="start-meta">
+          <div class="meta-row">
+            <span class="meta-label">麥克風</span>
+            <span id="mic-status" class="meta-value">尚未啟用</span>
+            <button id="btn-mic-retry" class="link-btn hidden" type="button">重試</button>
+          </div>
+          <p class="privacy-note">
+            音訊全程留在本機，不錄音、不上傳。建議配戴耳機；沒有麥克風也能用鍵盤完整遊玩。
+          </p>
+        </div>
+
+        <p class="start-foot">第一章「醒」約 5 分鐘 · 完整 4 章約 25–40 分鐘</p>
+      </div>
+    </section>
+
+    <!-- 校準 -->
+    <section id="screen-calibration" class="screen" aria-label="麥克風校準">
+      <div class="screen__veil"></div>
+      <div class="panel calibration-panel">
+        <p class="kicker">環境校準 · 約 15 秒</p>
+        <h2 class="panel__title">讓它記住你的聲音</h2>
+        <p id="calibration-instruction" class="panel__lead">先安靜三秒，讓麥克風記住環境底噪。</p>
+
+        <div class="calibration-meter" aria-hidden="true">
+          <div id="calibration-meter-fill" class="calibration-meter__fill"></div>
+          <div class="calibration-meter__ticks"></div>
+        </div>
+        <div class="calibration-readout">
+          <span id="calibration-step" class="calibration-step">步驟 1 / 3</span>
+          <span id="calibration-value" class="calibration-value">0</span>
+        </div>
+        <div class="calibration-progress"><div id="calibration-progress" class="calibration-progress__fill"></div></div>
+
+        <div class="panel__actions">
+          <button id="btn-calibrate" class="btn btn--primary" type="button">開始校準</button>
+          <button id="btn-skip-calibration" class="btn" type="button">略過，使用預設值</button>
+        </div>
+        <p class="panel__note">校準結果只存在這台裝置。之後可在設定中重新校準。</p>
+      </div>
+    </section>
+
+    <!-- 章節卡 -->
+    <section id="screen-chapter" class="screen" aria-label="章節">
+      <div class="screen__veil"></div>
+      <div class="panel chapter-panel">
+        <p id="chapter-card-kicker" class="kicker">第一章</p>
+        <h2 id="chapter-card-title" class="panel__title">醒</h2>
+        <div id="chapter-card-lines" class="chapter-lines"></div>
+        <div class="panel__actions">
+          <button id="btn-next-chapter" class="btn btn--primary" type="button">進入</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 暫停 -->
+    <section id="screen-pause" class="screen" aria-label="暫停">
+      <div class="screen__veil"></div>
+      <div class="panel pause-panel">
+        <p class="kicker">已暫停</p>
+        <h2 class="panel__title">安靜一下</h2>
+        <p class="panel__lead">牠也在聽。</p>
+        <div class="panel__actions panel__actions--column">
+          <button id="btn-resume" class="btn btn--primary" type="button">繼續</button>
+          <button id="btn-restart" class="btn" type="button">重新開始本章</button>
+          <button id="btn-pause-settings" class="btn" type="button">設定</button>
+          <button id="btn-quit" class="btn btn--ghost" type="button">回到主畫面</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 死亡 -->
+    <section id="screen-death" class="screen screen--death" aria-label="死亡">
+      <div class="death-heartbeat"></div>
+      <div class="death-wrap">
+        <p class="death-title">你被聽見了</p>
+        <p id="death-tip" class="death-tip">牠不追人。牠追聲音。</p>
+        <p id="death-countdown" class="death-countdown">3</p>
+      </div>
+    </section>
+
+    <!-- 結局 -->
+    <section id="screen-ending" class="screen" aria-label="結局">
+      <div class="screen__veil"></div>
+      <div class="panel ending-panel">
+        <p class="kicker">終章 · 寂靜之後</p>
+        <h2 id="ending-title" class="panel__title">你活下來了</h2>
+        <div id="ending-copy" class="ending-copy"></div>
+        <div id="ending-stats" class="ending-stats"></div>
+        <div class="panel__actions">
+          <button id="btn-replay" class="btn btn--primary" type="button">再玩一次</button>
+          <button id="btn-ending-menu" class="btn" type="button">回到主畫面</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 設定 -->
+    <div id="settings-panel" class="settings" role="dialog" aria-modal="true" aria-label="設定">
+      <div class="settings__backdrop"></div>
+      <div class="settings__card">
+        <div class="settings__head">
+          <h2>設定</h2>
+          <button id="btn-close-settings" class="icon-btn" type="button" aria-label="關閉設定">✕</button>
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label">控制模式</label>
+          <div class="segmented" role="radiogroup" aria-label="控制模式">
+            <label><input id="setting-mode-mic" type="radio" name="mode" value="mic" checked /><span>麥克風</span></label>
+            <label><input id="setting-mode-keyboard" type="radio" name="mode" value="keyboard" /><span>鍵盤（無麥克風）</span></label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label" for="setting-sensitivity">麥克風靈敏度 <span id="sensitivity-value">100%</span></label>
+          <input id="setting-sensitivity" class="range" type="range" min="50" max="200" step="5" value="100" />
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label" for="setting-volume">主音量 <span id="volume-setting-value">80%</span></label>
+          <input id="setting-volume" class="range" type="range" min="0" max="100" step="5" value="80" />
+        </div>
+
+        <div class="setting-row setting-row--inline">
+          <label class="setting-label" for="setting-subtitles">字幕</label>
+          <input id="setting-subtitles" class="toggle" type="checkbox" checked />
+        </div>
+
+        <div class="setting-row setting-row--inline">
+          <label class="setting-label" for="setting-reduced-motion">降低動態（減少震動與閃爍）</label>
+          <input id="setting-reduced-motion" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label">進度</label>
+          <button id="btn-reset-progress" class="link-btn link-btn--danger" type="button">重設所有章節進度</button>
+        </div>
+
+        <div class="settings__foot">
+          <p class="panel__note">《勿聲》v1.0 · 音訊不離開本機</p>
+          <button id="btn-settings-done" class="btn btn--primary" type="button">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 全域錯誤／提示 -->
+    <div id="boot-error" class="boot-error hidden" role="alert"></div>
+  </div>
+
+  <script type="module" src="js/game.js"></script>
+</body>
+</html>

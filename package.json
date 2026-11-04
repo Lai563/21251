@@ -1,0 +1,15 @@
+{
+  "name": "hush",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "《勿聲》HUSH — 以麥克風音量為唯一控制器的第一人稱聲音恐怖遊戲",
+  "scripts": {
+    "start": "node tools/serve.js",
+    "test": "node --test tests/unit tests/integration",
+    "check": "node tools/check.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
